@@ -28,11 +28,20 @@ class NetworkFragment : Fragment() {
          * downloading from.
          */
         fun getInstance(fragmentManager: FragmentManager, url: String): NetworkFragment {
-            val networkFragment = NetworkFragment()
-            val args = Bundle()
-            args.putString(URL_KEY, url)
-            networkFragment.arguments = args
-            fragmentManager.beginTransaction().add(networkFragment, TAG).commit()
+            // Recover NetworkFragment in case we are re-creating the Activity due to a config change.
+            // This is necessary because NetworkFragment might have a task that began running before
+            // the config change occurred and has not finished yet.
+            // The NetworkFragment is recoverable because it calls setRetainInstance(true).
+            var networkFragment = fragmentManager.findFragmentByTag(TAG) as? NetworkFragment
+            if (networkFragment == null) {
+                networkFragment = NetworkFragment()
+                networkFragment.arguments = Bundle().apply {
+                    putString(URL_KEY, url)
+                }
+                fragmentManager.beginTransaction()
+                    .add(networkFragment, TAG)
+                    .commit()
+            }
             return networkFragment
         }
     }
@@ -40,6 +49,9 @@ class NetworkFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         urlString = arguments?.getString(URL_KEY)
+
+        // Retain this Fragment across configuration changes in the host Activity.
+        retainInstance = true
     }
 
     override fun onAttach(context: Context?) {
