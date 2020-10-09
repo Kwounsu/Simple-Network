@@ -2,7 +2,7 @@ package com.example.simplenetwork
 
 import android.net.ConnectivityManager
 import android.os.AsyncTask
-import java.io.IOException
+import java.io.*
 import java.net.URL
 import javax.net.ssl.HttpsURLConnection
 
@@ -139,5 +139,26 @@ private class DownloadTask(callback: DownloadCallback<String>)
             connection?.inputStream?.close()
             connection?.disconnect()
         }
+    }
+
+    /**
+     * Converts the contents of an InputStream to a String.
+     */
+    @Throws(IOException::class, UnsupportedEncodingException::class)
+    fun readStream(stream: InputStream, maxReadSize: Int): String? {
+        val reader: Reader? = InputStreamReader(stream, "UTF-8")
+        val rawBuffer = CharArray(maxReadSize)
+        val buffer = StringBuffer()
+        var readSize: Int = reader?.read(rawBuffer) ?: -1
+        var maxReadBytes = maxReadSize
+        while (readSize != -1 && maxReadBytes > 0) {
+            if (readSize > maxReadBytes) {
+                readSize = maxReadBytes
+            }
+            buffer.append(rawBuffer, 0, readSize)
+            maxReadBytes -= readSize
+            readSize = reader?.read(rawBuffer) ?: -1
+        }
+        return buffer.toString()
     }
 }
