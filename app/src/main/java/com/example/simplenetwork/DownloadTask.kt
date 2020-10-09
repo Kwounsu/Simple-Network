@@ -4,6 +4,7 @@ import android.net.ConnectivityManager
 import android.os.AsyncTask
 import java.io.IOException
 import java.net.URL
+import javax.net.ssl.HttpsURLConnection
 
 /**
  * Implementation of AsyncTask designed to fetch data from the network.
@@ -99,4 +100,44 @@ private class DownloadTask(callback: DownloadCallback<String>)
      * Override to add special behavior for cancelled AsyncTask.
      */
     override fun onCancelled(result: Result) {}
+
+    /**
+     * Given a URL, sets up a connection and gets the HTTP response body from the server.
+     * If the network request is successful, it returns the response body in String form. Otherwise,
+     * it will throw an IOException.
+     */
+    @Throws(IOException::class)
+    private fun downloadUrl(url: URL): String? {
+        var connection: HttpsURLConnection? = null
+        return try {
+            connection = (url.openConnection() as? HttpsURLConnection)
+            connection?.run {
+                // Timeout for reading InputStream arbitrarily set to 3000ms.
+                readTimeout = 3000
+                // Timeout for connection.connect() arbitrarily set to 3000ms.
+                connectTimeout = 3000
+                // For this use case, set HTTP method to GET.
+                requestMethod = "GET"
+                // Already true by default but setting just in case; needs to be true since this request
+                // is carrying an input (response) body.
+                doInput = true
+                // Open communications link (network traffic occurs here).
+                connect()
+                publishProgress(CONNECT_SUCCESS)
+                if (responseCode != HttpsURLConnection.HTTP_OK) {
+                    throw IOException("HTTP error code: $responseCode")
+                }
+                // Retrieve the response body as an InputStream.
+                publishProgress(GET_INPUT_STREAM_SUCCESS, 0)
+                inputStream?.let { stream ->
+                    // Converts Stream to String with max length of 500.
+                    readStream(stream, 500)
+                }
+            }
+        } finally {
+            // Close Stream and disconnect HTTPS connection.
+            connection?.inputStream?.close()
+            connection?.disconnect()
+        }
+    }
 }
