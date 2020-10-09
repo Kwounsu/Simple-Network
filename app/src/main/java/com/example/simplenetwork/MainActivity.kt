@@ -23,13 +23,15 @@ class MainActivity : FragmentActivity(), DownloadCallback<String> {
 
         networkFragment = NetworkFragment.getInstance(supportFragmentManager, "https://www.google.com")
 
-        private fun startDownload() {
-            if (!downloading) {
-                // Execute the async download.
-                networkFragment?.apply {
-                    startDownload()
-                    downloading = true
-                }
+        startDownload()
+    }
+
+    private fun startDownload() {
+        if (!downloading) {
+            // Execute the async download.
+            networkFragment?.apply {
+                startDownload()
+                downloading = true
             }
         }
     }
