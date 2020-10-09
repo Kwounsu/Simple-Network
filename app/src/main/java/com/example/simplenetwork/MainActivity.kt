@@ -20,6 +20,18 @@ class MainActivity : FragmentActivity(), DownloadCallback<String> {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        networkFragment = NetworkFragment.getInstance(supportFragmentManager, "https://www.google.com")
+
+        private fun startDownload() {
+            if (!downloading) {
+                // Execute the async download.
+                networkFragment?.apply {
+                    startDownload()
+                    downloading = true
+                }
+            }
+        }
     }
 
     override fun updateFromDownload(result: String?) {
